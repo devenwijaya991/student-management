@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Login / Register</title>
+
+    <link rel="stylesheet" href="style.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
+
+    <script type="importmap">
+    {
+        "imports": {
+            "@supabase/supabase-js": "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm"
+        }
+    }
+    </script>
+</head>
+
+<body>
+
+    <div class="auth-container">
+        <div class="auth-card">
+
+            <div class="auth-header">
+                <h1>Student Management</h1>
+                <p>Sign in or create your account</p>
+            </div>
+
+            <!-- Tabs -->
+            <div class="auth-tabs">
+                <button class="tab-btn active" data-tab="login">Login</button>
+                <button class="tab-btn" data-tab="register">Register</button>
+            </div>
+
+            <!-- Login Form -->
+            <form id="loginForm" class="auth-form active">
+                <div class="input-group">
+                    <i class="fas fa-envelope"></i>
+                    <input
+                        type="email"
+                        id="loginEmail"
+                        placeholder="Email"
+                        required
+                    />
+                </div>
+
+                <div class="input-group">
+                    <i class="fas fa-lock"></i>
+                    <input
+                        type="password"
+                        id="loginPassword"
+                        placeholder="Password"
+                        required
+                    />
+                </div>
+
+                <div id="loginError" class="error-msg"></div>
+
+                <button type="submit" class="btn-primary">
+                    <i class="fas fa-sign-in-alt"></i>
+                    Login
+                </button>
+            </form>
+
+            <!-- Register Form -->
+            <form id="registerForm" class="auth-form">
+
+                <div class="input-group">
+                    <i class="fas fa-user"></i>
+                    <input
+                        type="text"
+                        id="regName"
+                        placeholder="Full Name"
+                        required
+                    />
+                </div>
+
+                <div class="input-group">
+                    <i class="fas fa-envelope"></i>
+                    <input
+                        type="email"
+                        id="regEmail"
+                        placeholder="Email"
+                        required
+                    />
+                </div>
+
+                <div class="input-group">
+                    <i class="fas fa-lock"></i>
+                    <input
+                        type="password"
+                        id="regPassword"
+                        placeholder="Password (min 6)"
+                        required
+                    />
+                </div>
+
+                <div id="regError" class="error-msg"></div>
+
+                <button type="submit" class="btn-primary">
+                    <i class="fas fa-user-plus"></i>
+                    Register
+                </button>
+            </form>
+
+        </div>
+    </div>
+
+    <script type="module">
+        import { createClient } from '@supabase/supabase-js';
+
+        // ==========================================
+        // CONFIGURE WITH YOUR SUPABASE KEYS
+        // ==========================================
+        const SUPABASE_URL = 'https://ndsdcyjmnflpmaqgtpsm.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5kc2RjeWptbmZscG1hcWd0cHNtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODUyNzYxMDksImV4cCI6MjEwMDg1MjEwOX0.Bj0d9HOmlR7jfKR4-49GwTasxX7Po2bkhxZYh-XzNis';
+
+        const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        const loginForm = document.getElementById('loginForm');
+        const registerForm = document.getElementById('registerForm');
+        const loginError = document.getElementById('loginError');
+        const regError = document.getElementById('regError');
+        const tabs = document.querySelectorAll('.tab-btn');
+
+        // ==========================
+        // Tab Switching
+        // ==========================
+        tabs.forEach(btn => {
+            btn.addEventListener('click', () => {
+                tabs.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+
+                const tab = btn.dataset.tab;
+
+                document
+                    .getElementById('loginForm')
+                    .classList.toggle('active', tab === 'login');
+
+                document
+                    .getElementById('registerForm')
+                    .classList.toggle('active', tab === 'register');
+
+                loginError.textContent = '';
+                regError.textContent = '';
+            });
+        });
+
+        // ==========================
+        // LOGIN
+        // ==========================
+        loginForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            loginError.textContent = '';
+
+            const email = document
+                .getElementById('loginEmail')
+                .value.trim();
+
+            const password = document
+                .getElementById('loginPassword')
+                .value.trim();
+
+            const { data, error } =
+                await supabase.auth.signInWithPassword({
+                    email,
+                    password
+                });
+
+            if (error) {
+                loginError.textContent = error.message;
+                return;
+            }
+
+            window.location.href = 'dashboard.html';
+        });
+
+        // ==========================
+        // REGISTER
+        // ==========================
+        registerForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            regError.textContent = '';
+
+            const name = document
+                .getElementById('regName')
+                .value.trim();
+
+            const email = document
+                .getElementById('regEmail')
+                .value.trim();
+
+            const password = document
+                .getElementById('regPassword')
+                .value.trim();
+
+            if (password.length < 6) {
+                regError.textContent =
+                    'Password must be at least 6 characters.';
+                return;
+            }
+
+            const { data, error } =
+                await supabase.auth.signUp({
+                    email,
+                    password,
+                    options: {
+                        data: {
+                            full_name: name
+                        }
+                    }
+                });
+
+            if (error) {
+                regError.textContent = error.message;
+                return;
+            }
+
+            alert('Registration successful! Please login.');
+
+            tabs.forEach(b => b.classList.remove('active'));
+
+            document
+                .querySelector('[data-tab="login"]')
+                .classList.add('active');
+
+            document
+                .getElementById('loginForm')
+                .classList.add('active');
+
+            document
+                .getElementById('registerForm')
+                .classList.remove('active');
+
+            registerForm.reset();
+        });
+    </script>
+
+</body>
+</html>
